@@ -10,4 +10,9 @@ The API could also be queried using POST multipart/form-data requests at 0.0.0.0
 
 The proclfile has also been attached so that one could directly upload the app on heroku
 
-Note : The application uses Bing Free API for calculating the distance matrix the key should be provided in the key file (currently has nothing) 
+Note : The application uses Bing Free API for calculating the distance matrix the key should be provided in the key file (currently has nothing) . Make sure to register for a Bing Free API and add the key in the key file before starting the server.
+
+My heroku-application : https://vehicleroutingproblem.herokuapp.com/
+
+Note : Since the heroku-application runs on free-tier program hence takes 20 seconds to boot up from inactivity (of 30 min) 
+ 
