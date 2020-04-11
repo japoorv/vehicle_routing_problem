@@ -8,4 +8,6 @@ Installation :
 
 The API could also be queried using POST multipart/form-data requests at 0.0.0.0:8080/handleUpload
 
-The proclfile has also been attached so that one could directly upload the app on heroku 
+The proclfile has also been attached so that one could directly upload the app on heroku
+
+Note : The application uses Bing Free API for calculating the distance matrix the key should be provided in the key file (currently has nothing) 
