@@ -35,6 +35,7 @@ def print_solution(data, manager, routing, solution):
         total_distance += route_distance
         total_load += route_load
     plan_output+='Total distance of all routes: {}m\n'.format(total_distance)+'Total load of all routes: {}'.format(total_load)
+    print (plan_output)
     return (plan_output)
 def create_data_model(name):
     data_file=pd.read_csv(name,dtype=str)
@@ -46,32 +47,40 @@ def create_data_model(name):
     origin=str(data_file.iloc[0,0])+','+str(data_file.iloc[0,1]) #warehouse coordinates are always index 0
     destinations=str(data_file.iloc[0,0])+','+str(data_file.iloc[0,1])
     data['depot_id']=['Warehouse']
+    print (data_file)
+    num_depots=0
     for i in range(0,len(data_file)):
         if (data_file.iloc[i,2]=='x'):
             break
+        num_depots+=1
         origin+=';'+str(data_file.iloc[i,2])+','+str(data_file.iloc[i,3])
         destinations+=';'+str(data_file.iloc[i,2])+','+str(data_file.iloc[i,3])
-        if (str(data_file.iloc[i,5])=='nan'):
+        if (str(data_file.iloc[i,5])!='nan'):
             data['depot_id'].append(data_file.iloc[i,5])
         else :
             data['depot_id'].append('Depot '+str(i))
-    num_depots=i
+    print (num_depots)
     data['vehicle_id']=[]
+    num_vehicles=0
     for i in range(0,len(data_file)):
+        print (data_file.iloc[i,6])
         if (data_file.iloc[i,6]=='x'):
             break
+        num_vehicles+=1
         if (str(data_file.iloc[i,7])!='nan'):
             data['vehicle_id'].append(data_file.iloc[i,7])
         else :
             data['vehicle_id'].append(str(i))   
     travelMode='driving'
-    num_vehicles=i
     url+=origin+'&'+'destinations='+destinations+'&travelMode='+travelMode+'&key='+key
     #print (url)
     distance_matrix = [[0 for i in range(num_depots+1)] for j in range(num_depots+1)]
     return_json=requests.get(url).json()['resourceSets'][0]['resources'][0]['results']
+    print (url)
     for i in return_json:
         distance_matrix[i['originIndex']][i['destinationIndex']]=int(float(i['travelDistance'])*1000) #in metres
+    print (distance_matrix)
+    print (num_vehicles)
     data['distance_matrix']=distance_matrix
     data['depot']=0
     data['num_vehicles']=num_vehicles
@@ -81,6 +90,7 @@ def create_data_model(name):
     data['vehicle_capacities']=[]
     for i in range(num_vehicles):
          data['vehicle_capacities'].append(float(data_file.iloc[i,6]))
+    print (data)
     return data
 def compute_vrp(name):
     """Solve the CVRP problem."""
