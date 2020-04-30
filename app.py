@@ -11,8 +11,49 @@ from ortools.constraint_solver import pywrapcp
 import math
 app = Flask(__name__)
 
-def print_solution(data, manager, routing, solution):
+def print_solution(data, manager, routing, assignment):
+    """Prints assignment on console."""
+    # Display dropped nodes.
+    drps=0
+    dropped_nodes = 'Dropped nodes:'
+    for node in range(routing.Size()):
+        if routing.IsStart(node) or routing.IsEnd(node):
+            continue
+        if assignment.Value(routing.NextVar(node)) == node:
+            drps+=1
+            if (drps==1):
+                dropped_nodes += ' '+data['depot_id'][int(format(manager.IndexToNode(node)))]
+            else :
+                dropped_nodes += ', '+data['depot_id'][int(format(manager.IndexToNode(node)))]
+    plan_output=dropped_nodes+'\n'
+    # Display routes
+    total_distance = 0
+    total_load = 0
+    for vehicle_id in range(data['num_vehicles']):
+        index = routing.Start(vehicle_id) 
+        plan_output += 'Route for vehicle {}:\n'.format(data['vehicle_id'][vehicle_id])
+        route_distance = 0
+        route_load = 0
+        while not routing.IsEnd(index):
+            node_index = manager.IndexToNode(index)
+            route_load += data['demands'][node_index]
+            plan_output += ' {0} Load -> '.format(data['depot_id'][node_index])
+            previous_index = index
+            index = assignment.Value(routing.NextVar(index))
+            route_distance += routing.GetArcCostForVehicle(
+                previous_index, index, vehicle_id)
+        plan_output += ' {0} Load\n'.format(data['depot_id'][manager.IndexToNode(index)])
+        plan_output += 'Distance of the route: {}m\n'.format(route_distance)
+        plan_output += 'Load of the route: {}\n\n'.format(route_load)
+        total_distance += route_distance
+        total_load += route_load
+    plan_output+=('Total Distance of all routes: {}m\n'.format(total_distance))
+    plan_output+=('Total Load of all routes: {}'.format(total_load))
+    return plan_output
+
+def print_solution_old(data, manager, routing, solution):
     """Prints solution on console."""
+    
     total_distance = 0
     total_load = 0
     for vehicle_id in range(data['num_vehicles']):
@@ -35,7 +76,6 @@ def print_solution(data, manager, routing, solution):
         total_distance += route_distance
         total_load += route_load
     plan_output+='Total distance of all routes: {}m\n'.format(total_distance)+'Total load of all routes: {}'.format(total_load)
-    print (plan_output)
     return (plan_output)
 def create_data_model(name):
     data_file=pd.read_csv(name,dtype=str)
@@ -47,7 +87,6 @@ def create_data_model(name):
     origin=str(data_file.iloc[0,0])+','+str(data_file.iloc[0,1]) #warehouse coordinates are always index 0
     destinations=str(data_file.iloc[0,0])+','+str(data_file.iloc[0,1])
     data['depot_id']=['Warehouse']
-    print (data_file)
     num_depots=0
     for i in range(0,len(data_file)):
         if (data_file.iloc[i,2]=='x'):
@@ -59,11 +98,9 @@ def create_data_model(name):
             data['depot_id'].append(data_file.iloc[i,5])
         else :
             data['depot_id'].append('Depot '+str(i))
-    print (num_depots)
     data['vehicle_id']=[]
     num_vehicles=0
     for i in range(0,len(data_file)):
-        print (data_file.iloc[i,6])
         if (data_file.iloc[i,6]=='x'):
             break
         num_vehicles+=1
@@ -76,11 +113,8 @@ def create_data_model(name):
     #print (url)
     distance_matrix = [[0 for i in range(num_depots+1)] for j in range(num_depots+1)]
     return_json=requests.get(url).json()['resourceSets'][0]['resources'][0]['results']
-    print (url)
     for i in return_json:
         distance_matrix[i['originIndex']][i['destinationIndex']]=int(float(i['travelDistance'])*1000) #in metres
-    print (distance_matrix)
-    print (num_vehicles)
     data['distance_matrix']=distance_matrix
     data['depot']=0
     data['num_vehicles']=num_vehicles
@@ -90,7 +124,6 @@ def create_data_model(name):
     data['vehicle_capacities']=[]
     for i in range(num_vehicles):
          data['vehicle_capacities'].append(float(data_file.iloc[i,6]))
-    print (data)
     return data
 def compute_vrp(name):
     """Solve the CVRP problem."""
@@ -133,8 +166,12 @@ def compute_vrp(name):
         data['vehicle_capacities'],  # vehicle maximum capacities
         True,  # start cumul to zero
         'Capacity')
+        # Allow to drop nodes.
+    penalty = 3215000 #horizontal distane of india; should be made large so that dropping nodes is discouraged
+    for node in range(1, len(data['distance_matrix'])):
+        routing.AddDisjunction([manager.NodeToIndex(node)], penalty)
 
-    # Setting first solution heuristic.
+    # Setting first solution heuristic.print
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
@@ -142,7 +179,6 @@ def compute_vrp(name):
     # Solve the problem.
     solution = routing.SolveWithParameters(search_parameters)
     # Print solution on console.
-    print (data)
     if solution:
         return print_solution(data, manager, routing, solution)
     else :
@@ -159,7 +195,6 @@ def fileFrontPage():
 
 @app.route("/handleUpload", methods=['POST'])
 def handleFileUpload(): 
-    print (request.files)
     if 'datax' in request.files: #all files should come in datax format
         data = request.files['datax']
         if data.filename != '' and is_csv(data.filename):

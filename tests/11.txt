@@ -1,0 +1,28 @@
+Dropped nodes: 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 14, 15, 16, 17
+Route for vehicle 0:
+ Warehouse Load ->  Warehouse Load
+Distance of the route: 0m
+Load of the route: 0
+
+Route for vehicle 1:
+ Warehouse Load ->  Warehouse Load
+Distance of the route: 0m
+Load of the route: 0
+
+Route for vehicle 2:
+ Warehouse Load ->  Warehouse Load
+Distance of the route: 0m
+Load of the route: 0
+
+Route for vehicle 3:
+ Warehouse Load ->  18 Load ->  12 Load ->  13 Load ->  9 Load ->  Warehouse Load
+Distance of the route: 204977m
+Load of the route: 76.0
+
+Route for vehicle 4:
+ Warehouse Load ->  Warehouse Load
+Distance of the route: 0m
+Load of the route: 0
+
+Total Distance of all routes: 204977m
+Total Load of all routes: 76.0
